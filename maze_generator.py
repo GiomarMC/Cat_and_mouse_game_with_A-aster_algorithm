@@ -56,9 +56,10 @@ class MazeGenerator:
 
     def _place_cheese(self):
         accessible_positions = []
+        n = self.width  # Asumimos mapa cuadrado
         for y in range(1, self.height-1):
             for x in range(1, self.width-1):
-                if self.grid[y][x] == 0:
+                if self.grid[y][x] == 0 and (x + y == n - 1):
                     accessible_positions.append((x, y))
         if accessible_positions:
             self.cheese_pos = random.choice(accessible_positions)
