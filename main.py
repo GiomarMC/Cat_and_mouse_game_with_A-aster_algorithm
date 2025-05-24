@@ -52,6 +52,13 @@ def draw_center_text(text, font, color, y_offset=0, outline=True):
     screen.blit(text_surface, rect)
 
 
+cheese_img_raw = pygame.image.load('assets/chesse.png')
+cheese_img = pygame.transform.scale(
+    cheese_img_raw,
+    (game_map.cell_size, game_map.cell_size)
+)
+
+
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -81,15 +88,14 @@ while True:
     screen.fill((0, 0, 0))
     # Siempre dibujar el mapa y personajes
     game_map.draw(screen)
+
+    screen.blit(
+        cheese_img,
+        (cheese_pos[0]*game_map.cell_size, cheese_pos[1]*game_map.cell_size)
+    )
+    
     player.draw(screen, game_map.cell_size)
     enemy.draw(screen, game_map.cell_size)
-    pygame.draw.circle(
-        screen,
-        (255, 255, 0),
-        (cheese_pos[0]*game_map.cell_size + game_map.cell_size//2,
-         cheese_pos[1]*game_map.cell_size + game_map.cell_size//2),
-        game_map.cell_size//3
-    )
 
     if game_state == 'countdown':
         elapsed = time.time() - countdown_start

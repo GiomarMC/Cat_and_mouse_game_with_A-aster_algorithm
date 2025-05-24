@@ -15,6 +15,20 @@ class Enemy:
         self.moving = False
         self.path = []
 
+        # Para animación
+        self.direction = 'down'
+        self.anim_frame = 0
+        self.anim_timer = 0
+        self.anim_interval = 5  # cada 5 frames cambia el sprite
+
+        size = int(cell_size * 1.2)
+        self.sprites = {
+            'up': [pygame.transform.scale(pygame.image.load(f'assets/cat/up{i}.png'), (size, size)) for i in range(4)],
+            'down': [pygame.transform.scale(pygame.image.load(f'assets/cat/down{i}.png'), (cell_size, cell_size)) for i in range(4)],
+            'left': [pygame.transform.scale(pygame.image.load(f'assets/cat/left{i}.png'), (size, size)) for i in range(4)],
+            'right': [pygame.transform.scale(pygame.image.load(f'assets/cat/right{i}.png'), (size, size)) for i in range(4)],
+        }
+
     def update_path(self, target_pos, game_map):
         self.path = a_star((self.x, self.y), target_pos, game_map.grid)
 
@@ -23,6 +37,12 @@ class Enemy:
             return
         if self.path and len(self.path) > 1:
             nx, ny = self.path[1]
+            dx, dy = nx - self.x, ny - self.y
+            if dx == 1: self.direction = 'right'
+            elif dx == -1: self.direction = 'left'
+            elif dy == 1: self.direction = 'down'
+            elif dy == -1: self.direction = 'up'
+
             self.x, self.y = nx, ny
             self.target_x = nx * self.cell_size
             self.target_y = ny * self.cell_size
@@ -47,11 +67,12 @@ class Enemy:
             if self.pixel_x == self.target_x and self.pixel_y == self.target_y:
                 self.moving = False
 
+        # Control de animación
+        self.anim_timer += 1
+        if self.anim_timer >= self.anim_interval:
+            self.anim_frame = (self.anim_frame + 1) % 4
+            self.anim_timer = 0
+
     def draw(self, screen, cell_size):
-        pygame.draw.circle(
-            screen,
-            (255, 0, 0),
-            (int(self.pixel_x) + cell_size//2,
-             int(self.pixel_y) + cell_size//2),
-            cell_size//3
-        )
+        sprite = self.sprites[self.direction][self.anim_frame]
+        screen.blit(sprite, (self.pixel_x, self.pixel_y))

@@ -16,15 +16,25 @@ class GameMap:
         for y in range(self.rows):
             for x in range(self.cols):
                 rect = pygame.Rect(
-                    x*self.cell_size,
-                    y*self.cell_size,
+                    x * self.cell_size,
+                    y * self.cell_size,
                     self.cell_size,
                     self.cell_size
                 )
-                color = (50, 50, 50) if self.grid[y][x] == 1 else \
-                    (255, 255, 255)
-                pygame.draw.rect(screen, color, rect)
-                pygame.draw.rect(screen, (200, 200, 200), rect, 1)
+                if self.grid[y][x] == 0:
+                    # piso
+                    pygame.draw.rect(screen, (222, 184, 135), rect)  # Pino claro
+                else:
+                    # dibuja solo un borde más fino del muro
+                    margin = self.cell_size // 6  # ajusta para grosor
+                    wall_rect = pygame.Rect(
+                        rect.x + margin,
+                        rect.y + margin,
+                        self.cell_size - 2 * margin,
+                        self.cell_size - 2 * margin
+                    )
+                    pygame.draw.rect(screen, (100, 60, 60), wall_rect, border_radius=4)
+
 
     def is_wall(self, x, y):
         return self.grid[y][x] == 1
