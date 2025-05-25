@@ -10,10 +10,16 @@ clock = pygame.time.Clock()
 font = pygame.font.SysFont(None, 80)
 small_font = pygame.font.SysFont(None, 40)
 
+# Cargar imagen de portada
+start_img_raw = pygame.image.load('assets/portada.jpg')
+start_img = pygame.transform.scale(start_img_raw, (600, 600))
+
+first_start = True  # Solo mostrar pantalla de inicio la primera vez
+
 
 def reset_game():
     global game_map, player, enemy, cheese_pos, move_dir, \
-        running, game_state, winner
+        running, game_state, winner, first_start
     game_map = GameMap(15, 15)
     player_start = game_map.get_valid_start_position('top_left')
     enemy_start = game_map.get_valid_start_position('bottom_right')
@@ -24,7 +30,10 @@ def reset_game():
     cheese_pos = game_map.get_cheese_pos()
     move_dir = [0, 0]
     running = True
-    game_state = 'countdown'
+    if first_start:
+        game_state = 'start'
+    else:
+        game_state = 'countdown'
     winner = None
 
 
@@ -64,7 +73,12 @@ while True:
         if event.type == pygame.QUIT:
             pygame.quit()
             exit()
-        if game_state == 'playing':
+        if game_state == 'start':
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                game_state = 'countdown'
+                countdown_start = time.time()
+                first_start = False
+        elif game_state == 'playing':
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
                     move_dir = [-1, 0]
@@ -82,62 +96,77 @@ while True:
                     move_dir = [0, 0]
         elif game_state == 'gameover':
             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                first_start = False
                 reset_game()
                 countdown_start = time.time()
 
     screen.fill((0, 0, 0))
-    # Siempre dibujar el mapa y personajes
-    game_map.draw(screen)
 
-    screen.blit(
-        cheese_img,
-        (cheese_pos[0]*game_map.cell_size, cheese_pos[1]*game_map.cell_size)
-    )
-    
-    player.draw(screen, game_map.cell_size)
-    enemy.draw(screen, game_map.cell_size)
-
-    if game_state == 'countdown':
-        elapsed = time.time() - countdown_start
-        count = countdown_time - int(elapsed)
-        if count > 0:
-            draw_center_text(str(count), font, (255, 255, 0))  # Amarillo
-        elif 0 <= elapsed < countdown_time + 1:
-            draw_center_text('GO!', font, (0, 255, 0))  # Verde
-        else:
-            game_state = 'playing'
-    elif game_state == 'playing':
-        # Movimiento continuo del jugador
-        if move_dir != [0, 0] and not player.moving:
-            player.move(move_dir[0], move_dir[1], game_map)
-        player.update()
-        # IA: recalcular ruta y mover al gato solo si no está moviéndose
-        if not enemy.moving:
-            enemy.update_path((player.x, player.y), game_map)
-            enemy.follow_path()
-        enemy.update()
-        # Condición de victoria o derrota
-        if (player.x, player.y) == (enemy.x, enemy.y):
-            winner = 'cat'
-            game_state = 'gameover'
-        if (player.x, player.y) == cheese_pos:
-            winner = 'mouse'
-            game_state = 'gameover'
-    elif game_state == 'gameover':
-        if winner == 'mouse':
-            draw_center_text(
-                '¡El ratón ganó!', font, (0, 255, 0), y_offset=-40
-            )
-        elif winner == 'cat':
-            draw_center_text(
-                '¡El gato atrapó al ratón!', font, (255, 0, 0), y_offset=-40
-            )
+    if game_state == 'start':
+        screen.blit(start_img, (0, 0))
         draw_center_text(
-            'Presiona ESPACIO para reiniciar',
-            small_font,
-            (255, 255, 255),
-            y_offset=40
+            'Press SPACE to start',
+            font,
+            (255, 255, 0),
+            y_offset=180
         )
+    else:
+        # Siempre dibujar el mapa y personajes
+        game_map.draw(screen)
+        screen.blit(
+            cheese_img,
+            (
+                cheese_pos[0] * game_map.cell_size,
+                cheese_pos[1] * game_map.cell_size
+            )
+        )
+        player.draw(screen, game_map.cell_size)
+        enemy.draw(screen, game_map.cell_size)
+
+        if game_state == 'countdown':
+            elapsed = time.time() - countdown_start
+            count = countdown_time - int(elapsed)
+            if count > 0:
+                draw_center_text(str(count), font, (255, 255, 0))  # Amarillo
+            elif 0 <= elapsed < countdown_time + 1:
+                draw_center_text('GO!', font, (0, 255, 0))  # Verde
+            else:
+                game_state = 'playing'
+        elif game_state == 'playing':
+            # Movimiento continuo del jugador
+            if move_dir != [0, 0] and not player.moving:
+                player.move(move_dir[0], move_dir[1], game_map)
+            player.update()
+            # IA: recalcular ruta y mover al gato solo si no está moviéndose
+            if not enemy.moving:
+                enemy.update_path((player.x, player.y), game_map)
+                enemy.follow_path()
+            enemy.update()
+            # Condición de victoria o derrota
+            if (player.x, player.y) == (enemy.x, enemy.y):
+                winner = 'cat'
+                game_state = 'gameover'
+            if (player.x, player.y) == cheese_pos:
+                winner = 'mouse'
+                game_state = 'gameover'
+        elif game_state == 'gameover':
+            if winner == 'mouse':
+                draw_center_text(
+                    '¡El ratón ganó!', font, (0, 255, 0), y_offset=-40
+                )
+            elif winner == 'cat':
+                draw_center_text(
+                    '¡El gato atrapó al ratón!',
+                    font,
+                    (255, 0, 0),
+                    y_offset=-40
+                )
+            draw_center_text(
+                'Presiona ESPACIO para reiniciar',
+                small_font,
+                (255, 255, 255),
+                y_offset=40
+            )
 
     pygame.display.flip()
     clock.tick(60)
